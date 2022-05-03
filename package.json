@@ -1,0 +1,24 @@
+{
+  "name": "@goto-bus-stop/yt",
+  "version": "0.0.0",
+  "description": "A cheeky alternative YouTube Player API implementation",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./install": "./install.js",
+    "./dist": "./dist.js"
+  },
+  "type": "module",
+  "scripts": {
+    "lint": "standard",
+    "prepare": "rollup -i install.js -p terser -o dist.js"
+  },
+  "keywords": [],
+  "author": "Renée Kooi <renee@kooi.me>",
+  "license": "Unlicense",
+  "devDependencies": {
+    "rollup": "^2.71.1",
+    "rollup-plugin-terser": "^7.0.2",
+    "standard": "^17.0.0"
+  }
+}
