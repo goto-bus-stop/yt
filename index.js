@@ -6,6 +6,7 @@ const PAUSED = 2
 const BUFFERING = 3
 const CUED = 5
 
+/** @param {import('.').PlayerOptions} options */
 function getEmbedUrl (options) {
   const params = new URLSearchParams(
     Object.entries(options.playerVars)
@@ -15,16 +16,17 @@ function getEmbedUrl (options) {
   return `${options.host}/embed/${options.videoId ?? ''}?${params}`
 }
 
+/** @param {Required<import('.').PlayerOptions>} options */
 function createIframe (options) {
   const iframe = document.createElement('iframe')
   iframe.setAttribute('frameborder', '0')
   iframe.setAttribute('allowfullscreen', '1')
   iframe.setAttribute('title', `YouTube ${options.title}`)
   if (options.width) {
-    iframe.setAttribute('width', options.width)
+    iframe.setAttribute('width', String(options.width))
   }
   if (options.height) {
-    iframe.setAttribute('height', options.height)
+    iframe.setAttribute('height', String(options.height))
   }
   iframe.src = getEmbedUrl(options)
   return iframe
