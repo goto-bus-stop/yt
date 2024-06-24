@@ -6,17 +6,17 @@ const PAUSED = 2
 const BUFFERING = 3
 const CUED = 5
 
-/** @param {import('.').PlayerOptions} options */
+/** @param {Required<YT.PlayerOptions>} options */
 function getEmbedUrl (options) {
   const params = new URLSearchParams(
     Object.entries(options.playerVars)
       .filter(([, value]) => value != null)
   )
   params.set('enablejsapi', '1')
-  return `${options.host}/embed/${options.videoId ?? ''}?${params}`
+  return `${options.host}/embed/${options.videoId}?${params}`
 }
 
-/** @param {Required<import('.').PlayerOptions>} options */
+/** @param {Required<YT.PlayerOptions & { title: string }>} options */
 function createIframe (options) {
   const iframe = document.createElement('iframe')
   iframe.setAttribute('frameborder', '0')
@@ -32,7 +32,7 @@ function createIframe (options) {
   return iframe
 }
 
-const players = new Map()
+const messageHandlers = new Map()
 const attachedListeners = new Set()
 
 /** @param {string} host */
@@ -50,7 +50,7 @@ function attachGlobalListener (host) {
       } catch {
         return
       }
-      players.get(data.id)?.handleMessage(data)
+      messageHandlers.get(data.id)?.(data)
     }
   })
 }
@@ -69,31 +69,44 @@ class Player {
   #iframe
   #messageQueue = []
   #ready = false
-  #pollReadiness
+  #pollReadiness = null
   #info = {}
   #events = new Map()
 
+  /**
+   * @param {HTMLElement|string} target
+   * @param {YT.PlayerOptions} options
+   */
   constructor (target, options) {
-    this.options = { ...options }
+    /** @type {Required<YT.PlayerOptions & { id: string, title: string }>} */
+    const defaults = {
+      id: `c${id++}`,
+      videoId: '',
+      width: 640,
+      height: 390,
+      title: 'video player',
+      host: 'https://www.youtube.com',
+      events: {},
+      playerVars: {},
+    }
+    this.options = { ...defaults, ...options }
 
     // Defaults
-    this.options.id ??= `c${id++}`
-    this.options.videoId ??= ''
-    this.options.width ??= 640
-    this.options.height ??= 390
-    this.options.title ??= 'video player'
-    this.options.host ??= 'https://www.youtube.com'
-    this.options.events ??= {}
-    this.options.playerVars ??= {}
+    Object.entries(defaults).forEach(([key, value]) => {
+      this.options[key] ??= value
+    })
 
     this.id = this.options.id
 
     const element = typeof target === 'string' ? document.getElementById(target) : target
-    const iframe = element.tagName === 'IFRAME' ? element : createIframe(this.options)
+    if (!element) {
+      throw new Error('target must be an element')
+    }
+    const iframe = element.tagName === 'IFRAME' ? /** @type {HTMLIFrameElement} */ (element) : createIframe(this.options)
     iframe.setAttribute('id', `widget${this.id}`)
 
     if (iframe !== element) {
-      element.parentNode.replaceChild(iframe, element)
+      element.parentNode?.replaceChild(iframe, element)
     }
     this.#iframe = iframe
     this.#originalElement = element
@@ -109,10 +122,12 @@ class Player {
     })
 
     attachGlobalListener(this.options.host)
-    if (players.has(this.id)) {
+    if (messageHandlers.has(this.id)) {
       throw new Error(`Duplicate player id: ${this.id}`)
     }
-    players.set(this.id, this)
+    messageHandlers.set(this.id, (data) => {
+      this.#handleMessage(data)
+    })
   }
 
   #stopPolling () {
@@ -127,7 +142,7 @@ class Player {
     if (this.#iframe !== this.#originalElement) {
       this.#iframe.parentNode.replaceChild(this.#originalElement, this.#iframe)
     }
-    players.delete(this.id)
+    messageHandlers.delete(this.id)
   }
 
   #sendMessage (data) {
@@ -138,7 +153,7 @@ class Player {
     this.#iframe.contentWindow.postMessage(JSON.stringify(payload), this.options.host)
   }
 
-  handleMessage (data) {
+  #handleMessage (data) {
     if (this.#messageQueue.length > 0) {
       this.#messageQueue.forEach((message) => this.#sendMessage(message))
       this.#messageQueue = []
@@ -319,6 +334,7 @@ class Player {
   }
 }
 
+/** @type {typeof YT.PlayerState} */
 const PlayerState = {
   UNSTARTED,
   ENDED,
