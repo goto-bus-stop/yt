@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "author": "Renée Kooi <renee@kooi.me>",
   "dependencies": {
-    "@types/youtube": "^0.0.50"
+    "@types/youtube": "0.1.0"
   },
   "devDependencies": {
     "@rollup/plugin-terser": "^0.4.4",
