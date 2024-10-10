@@ -1,8 +1,9 @@
 {
   "name": "@goto-bus-stop/yt",
   "description": "A cheeky alternative YouTube Player API implementation",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "author": "Renée Kooi <renee@kooi.me>",
+  "bugs": "https://github.com/goto-bus-stop/yt/issues",
   "dependencies": {
     "@types/youtube": "0.1.0"
   },
@@ -17,9 +18,20 @@
     "./install": "./install.js",
     "./dist": "./dist.js"
   },
-  "keywords": [],
+  "homepage": "https://github.com/goto-bus-stop/yt",
+  "keywords": [
+    "embed",
+    "iframe",
+    "player",
+    "video",
+    "youtube"
+  ],
   "license": "Unlicense",
   "main": "./index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/goto-bus-stop/yt.git"
+  },
   "scripts": {
     "lint": "standard",
     "prepare": "rollup -i install.js -p terser -o dist.js"
